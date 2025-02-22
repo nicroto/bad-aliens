@@ -1,0 +1,20 @@
+{
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "name": "bad-aliens",
+  "version": "1.0.0",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@types/node": "^22.13.5",
+    "phaser": "^3.88.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.1"
+  }
+}
