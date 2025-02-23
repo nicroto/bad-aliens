@@ -1,6 +1,6 @@
 export class GameScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
   private lasers!: Phaser.Physics.Arcade.Group;
   private enemies!: Phaser.Physics.Arcade.Group;
   private lastFired: number = 0;
@@ -8,6 +8,7 @@ export class GameScene extends Phaser.Scene {
 
   constructor() {
     super({ key: "GameScene" });
+    this.cursors = {} as Phaser.Types.Input.Keyboard.CursorKeys;
   }
 
   preload() {
@@ -18,12 +19,25 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // Create player
+    // Set physics to use fixed time step
+    this.physics.world.fixedStep = true;
+
+    // Create player with integer position
     this.player = this.physics.add.sprite(400, 500, "player");
     this.player.setCollideWorldBounds(true);
+    this.player.setScale(0.125);
+    this.player.setAngle(0);
+
+    // Set pixel-perfect movement
+    this.player.setDragX(1000); // Add drag to smooth movement
+    this.player.setMaxVelocity(200, 0); // Limit max speed
+
+    // Enable pixel-perfect movement
+    this.player.setX(Math.round(this.player.x));
+    this.physics.world.setBoundsCollision(true, true, true, true);
 
     // Setup controls
-    this.cursors = this.input.keyboard.createCursorKeys();
+    this.cursors = this.input.keyboard!.createCursorKeys();
 
     // Create groups for lasers and enemies
     this.lasers = this.physics.add.group();
@@ -41,12 +55,11 @@ export class GameScene extends Phaser.Scene {
     this.physics.add.collider(
       this.lasers,
       this.enemies,
-      (
-        laser: Phaser.Types.Physics.Arcade.GameObjectWithBody,
-        enemy: Phaser.Types.Physics.Arcade.GameObjectWithBody
-      ) => {
-        (laser as Phaser.Physics.Arcade.Sprite).destroy();
-        (enemy as Phaser.Physics.Arcade.Sprite).destroy();
+      (object1, object2) => {
+        const laser = object1 as Phaser.Physics.Arcade.Sprite;
+        const enemy = object2 as Phaser.Physics.Arcade.Sprite;
+        laser.destroy();
+        enemy.destroy();
       },
       undefined,
       this
@@ -62,6 +75,9 @@ export class GameScene extends Phaser.Scene {
     } else {
       this.player.setVelocityX(0);
     }
+
+    // Round position to prevent shimmering
+    this.player.setX(Math.round(this.player.x));
 
     // Handle shooting
     if (this.cursors.space.isDown && time > this.lastFired + this.fireDelay) {
