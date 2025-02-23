@@ -22,8 +22,12 @@ export class GameScene extends Phaser.Scene {
     // Set physics to use fixed time step
     this.physics.world.fixedStep = true;
 
-    // Create player with integer position
-    this.player = this.physics.add.sprite(400, 500, "player");
+    // Create player with position relative to screen height
+    this.player = this.physics.add.sprite(
+      window.innerWidth / 2,
+      window.innerHeight * 0.8, // Position at 80% of screen height
+      "player"
+    );
     this.player.setCollideWorldBounds(true);
     this.player.setScale(0.125);
     this.player.setAngle(0);
@@ -99,7 +103,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private spawnEnemy() {
-    const x = Phaser.Math.Between(50, 750);
+    const margin = 50;
+    const x = Phaser.Math.Between(margin, window.innerWidth - margin);
     const enemy = this.enemies.create(x, 50, "enemy");
     enemy.setVelocityY(100);
   }
@@ -118,7 +123,7 @@ export class GameScene extends Phaser.Scene {
       .getChildren()
       .forEach((enemy: Phaser.GameObjects.GameObject) => {
         const sprite = enemy as Phaser.Physics.Arcade.Sprite;
-        if (sprite.y > 600) {
+        if (sprite.y > window.innerHeight) {
           sprite.destroy();
         }
       });
