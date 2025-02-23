@@ -5,6 +5,8 @@ export class GameScene extends Phaser.Scene {
   private enemies!: Phaser.Physics.Arcade.Group;
   private lastFired: number = 0;
   private readonly fireDelay: number = 200; // milliseconds between shots
+  private bg1!: Phaser.GameObjects.Sprite;
+  private bg2!: Phaser.GameObjects.Sprite;
 
   constructor() {
     super({ key: "GameScene" });
@@ -16,16 +18,35 @@ export class GameScene extends Phaser.Scene {
     this.load.image("player", "assets/player.png");
     this.load.image("laser", "assets/laser.png");
     this.load.image("enemy", "assets/enemy.png");
+    this.load.image("background1", "assets/background-1.png");
+    this.load.image("background2", "assets/background-2.png");
   }
 
   create() {
     // Set physics to use fixed time step
     this.physics.world.fixedStep = true;
 
+    // Create the two background sprites first
+    this.bg1 = this.add.sprite(0, 0, "background1");
+    this.bg2 = this.add.sprite(0, -this.bg1.height, "background2");
+
+    // Set the origin to top-left corner
+    this.bg1.setOrigin(0, 0);
+    this.bg2.setOrigin(0, 0);
+
+    // Scale up the backgrounds to cover the screen width
+    const scaleX = window.innerWidth / this.bg1.width;
+    const scaleY = scaleX; // Keep aspect ratio
+    this.bg1.setScale(scaleX + 0.1); // Add a little extra to ensure full coverage
+    this.bg2.setScale(scaleX + 0.1);
+
+    // Reposition bg2 after scaling
+    this.bg2.y = -this.bg1.displayHeight;
+
     // Create player with position relative to screen height
     this.player = this.physics.add.sprite(
       window.innerWidth / 2,
-      window.innerHeight * 0.8, // Position at 80% of screen height
+      window.innerHeight * 0.8,
       "player"
     );
     this.player.setCollideWorldBounds(true);
@@ -91,6 +112,20 @@ export class GameScene extends Phaser.Scene {
 
     // Clean up off-screen objects
     this.cleanupOffscreenObjects();
+
+    // Scroll both backgrounds downward
+    this.bg1.y += 2; // Adjust speed as needed
+    this.bg2.y += 2;
+
+    // When bg1 moves completely off screen, place it above bg2
+    if (this.bg1.y >= this.cameras.main.height) {
+      this.bg1.y = this.bg2.y - this.bg1.displayHeight;
+    }
+
+    // When bg2 moves completely off screen, place it above bg1
+    if (this.bg2.y >= this.cameras.main.height) {
+      this.bg2.y = this.bg1.y - this.bg2.displayHeight;
+    }
   }
 
   private fireLaser() {
