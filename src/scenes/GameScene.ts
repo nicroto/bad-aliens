@@ -53,9 +53,11 @@ export class GameScene extends Phaser.Scene {
     this.player.setScale(0.125);
     this.player.setAngle(0);
 
-    // Set pixel-perfect movement
-    this.player.setDragX(1000); // Add drag to smooth movement
-    this.player.setMaxVelocity(200, 0); // Limit max speed
+    // Adjust movement physics for more dynamic control
+    this.player.setDragX(1500); // Increased drag for quicker stop
+    this.player.setDragY(1500); // Add vertical drag
+    this.player.setMaxVelocity(400, 400); // Allow max speed in both directions
+    this.player.setAcceleration(0, 0); // Initialize acceleration
 
     // Enable pixel-perfect movement
     this.player.setX(Math.round(this.player.x));
@@ -92,17 +94,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number) {
-    // Handle player movement
+    // Handle player movement with acceleration
+    const acceleration = 2000; // High acceleration for responsive movement
+
+    // Horizontal movement
     if (this.cursors.left.isDown) {
-      this.player.setVelocityX(-200);
+      const boost = this.player.body?.velocity.x < 0 ? 1.2 : 1;
+      this.player.setAccelerationX(-acceleration * boost);
     } else if (this.cursors.right.isDown) {
-      this.player.setVelocityX(200);
+      const boost = this.player.body?.velocity.x > 0 ? 1.2 : 1;
+      this.player.setAccelerationX(acceleration * boost);
     } else {
-      this.player.setVelocityX(0);
+      this.player.setAccelerationX(0);
+    }
+
+    // Vertical movement
+    if (this.cursors.up.isDown) {
+      const boost = this.player.body?.velocity.y < 0 ? 1.2 : 1;
+      this.player.setAccelerationY(-acceleration * boost);
+    } else if (this.cursors.down.isDown) {
+      const boost = this.player.body?.velocity.y > 0 ? 1.2 : 1;
+      this.player.setAccelerationY(acceleration * boost);
+    } else {
+      this.player.setAccelerationY(0);
     }
 
     // Round position to prevent shimmering
     this.player.setX(Math.round(this.player.x));
+    this.player.setY(Math.round(this.player.y));
 
     // Handle shooting
     if (this.cursors.space.isDown && time > this.lastFired + this.fireDelay) {
