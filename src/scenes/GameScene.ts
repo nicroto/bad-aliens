@@ -94,6 +94,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number) {
+    if (!this.player.body) return;
+
     // Handle player movement with acceleration
     const acceleration = 2000; // High acceleration for responsive movement
 
