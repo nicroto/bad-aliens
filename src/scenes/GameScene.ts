@@ -35,9 +35,9 @@ export class GameScene extends Phaser.Scene {
     this.backgroundManager = new BackgroundManager(this);
     this.playerManager = new PlayerManager(this);
     this.weaponManager = new WeaponManager(this);
-    this.enemyManager = new EnemyManager(this);
+    this.enemyManager = new EnemyManager(this, this.playerManager.getPlayer());
 
-    // Setup collisions
+    // Setup collisions between player lasers and enemies
     this.physics.add.collider(
       this.weaponManager.getLasers(),
       this.enemyManager.getEnemies(),
@@ -46,6 +46,20 @@ export class GameScene extends Phaser.Scene {
         const enemy = object2 as Phaser.Physics.Arcade.Sprite;
         laser.destroy();
         enemy.destroy();
+      },
+      undefined,
+      this
+    );
+
+    // Setup collisions between enemy bullets and player
+    this.physics.add.collider(
+      this.enemyManager.getEnemyBullets(),
+      this.playerManager.getPlayer(),
+      (object1, object2) => {
+        const bullet = object1 as Phaser.Physics.Arcade.Sprite;
+        bullet.destroy();
+        // Here you could add player damage/death logic
+        console.log("Player hit by enemy bullet!");
       },
       undefined,
       this

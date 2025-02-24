@@ -2,12 +2,16 @@ import * as Phaser from "phaser";
 
 export class EnemyManager {
   private enemies: Phaser.Physics.Arcade.Group;
+  private enemyBullets: Phaser.Physics.Arcade.Group;
   private scene: Phaser.Scene;
   private readonly baseSpeed = 100;
+  private player: Phaser.Physics.Arcade.Sprite;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, player: Phaser.Physics.Arcade.Sprite) {
     this.scene = scene;
+    this.player = player;
     this.enemies = this.scene.physics.add.group();
+    this.enemyBullets = this.scene.physics.add.group();
     this.setupEnemySpawning();
   }
 
@@ -32,6 +36,7 @@ export class EnemyManager {
     enemy.setData("type", enemyNumber);
     enemy.setData("startX", x);
     enemy.setData("startTime", this.scene.time.now);
+    enemy.setData("lastShot", 0); // Track last shot time for each enemy
 
     // Set initial velocity based on type
     switch (enemyNumber) {
@@ -50,6 +55,36 @@ export class EnemyManager {
       case 4: // Pulsing
         enemy.setVelocityY(this.baseSpeed);
         break;
+    }
+  }
+
+  private shootAtPlayer(enemy: Phaser.Physics.Arcade.Sprite) {
+    const currentTime = this.scene.time.now;
+    const lastShot = enemy.getData("lastShot") || 0;
+    const shootingDelay = 2000; // Shoot every 2 seconds
+
+    if (currentTime - lastShot >= shootingDelay) {
+      const bullet = this.enemyBullets.create(enemy.x, enemy.y + 20, "laser");
+      bullet.setScale(0.5);
+      bullet.setTint(0xff0000); // Make enemy bullets red
+
+      // Calculate angle to player
+      const angle = Phaser.Math.Angle.Between(
+        enemy.x,
+        enemy.y,
+        this.player.x,
+        this.player.y
+      );
+
+      // Set bullet velocity based on angle
+      const speed = 200;
+      this.scene.physics.velocityFromRotation(
+        angle,
+        speed,
+        bullet.body.velocity
+      );
+
+      enemy.setData("lastShot", currentTime);
     }
   }
 
@@ -96,11 +131,18 @@ export class EnemyManager {
             sprite.setVelocityY(this.baseSpeed * speedMultiplier);
             break;
         }
+
+        // Add shooting logic
+        this.shootAtPlayer(sprite);
       });
   }
 
   getEnemies(): Phaser.Physics.Arcade.Group {
     return this.enemies;
+  }
+
+  getEnemyBullets(): Phaser.Physics.Arcade.Group {
+    return this.enemyBullets;
   }
 
   cleanup() {
@@ -109,6 +151,21 @@ export class EnemyManager {
       .forEach((enemy: Phaser.GameObjects.GameObject) => {
         const sprite = enemy as Phaser.Physics.Arcade.Sprite;
         if (sprite.y > window.innerHeight) {
+          sprite.destroy();
+        }
+      });
+
+    // Clean up off-screen bullets
+    this.enemyBullets
+      .getChildren()
+      .forEach((bullet: Phaser.GameObjects.GameObject) => {
+        const sprite = bullet as Phaser.Physics.Arcade.Sprite;
+        if (
+          sprite.y > window.innerHeight ||
+          sprite.y < 0 ||
+          sprite.x < 0 ||
+          sprite.x > window.innerWidth
+        ) {
           sprite.destroy();
         }
       });
