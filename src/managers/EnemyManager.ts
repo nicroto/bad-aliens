@@ -22,8 +22,11 @@ export class EnemyManager {
   private spawnEnemy() {
     const margin = 50;
     const x = Phaser.Math.Between(margin, window.innerWidth - margin);
-    const enemy = this.enemies.create(x, 50, "enemy");
+    const enemyNumber = Phaser.Math.Between(1, 4);
+    const enemy = this.enemies.create(x, 50, `enemy-${enemyNumber}`);
+    enemy.setScale(0.25);
     enemy.setVelocityY(100);
+    enemy.setAngle(180); // Rotate to face downward
   }
 
   getEnemies(): Phaser.Physics.Arcade.Group {

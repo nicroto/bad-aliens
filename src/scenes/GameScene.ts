@@ -18,7 +18,10 @@ export class GameScene extends Phaser.Scene {
     // Load assets
     this.load.image("player", "assets/player.png");
     this.load.image("laser", "assets/laser.png");
-    this.load.image("enemy", "assets/enemy.png");
+    this.load.image("enemy-1", "assets/enemy-1.png");
+    this.load.image("enemy-2", "assets/enemy-2.png");
+    this.load.image("enemy-3", "assets/enemy-3.png");
+    this.load.image("enemy-4", "assets/enemy-4.png");
     this.load.image("background1", "assets/background-1.png");
     this.load.image("background2", "assets/background-2.png");
   }
