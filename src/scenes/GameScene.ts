@@ -1,16 +1,17 @@
+import * as Phaser from "phaser";
+import { PlayerManager } from "../managers/PlayerManager";
+import { BackgroundManager } from "../managers/BackgroundManager";
+import { WeaponManager } from "../managers/WeaponManager";
+import { EnemyManager } from "../managers/EnemyManager";
+
 export class GameScene extends Phaser.Scene {
-  private player!: Phaser.Physics.Arcade.Sprite;
-  private cursors: Phaser.Types.Input.Keyboard.CursorKeys;
-  private lasers!: Phaser.Physics.Arcade.Group;
-  private enemies!: Phaser.Physics.Arcade.Group;
-  private lastFired: number = 0;
-  private readonly fireDelay: number = 200; // milliseconds between shots
-  private bg1!: Phaser.GameObjects.Sprite;
-  private bg2!: Phaser.GameObjects.Sprite;
+  private playerManager!: PlayerManager;
+  private backgroundManager!: BackgroundManager;
+  private weaponManager!: WeaponManager;
+  private enemyManager!: EnemyManager;
 
   constructor() {
     super({ key: "GameScene" });
-    this.cursors = {} as Phaser.Types.Input.Keyboard.CursorKeys;
   }
 
   preload() {
@@ -25,63 +26,18 @@ export class GameScene extends Phaser.Scene {
   create() {
     // Set physics to use fixed time step
     this.physics.world.fixedStep = true;
-
-    // Create the two background sprites first
-    this.bg1 = this.add.sprite(0, 0, "background1");
-    this.bg2 = this.add.sprite(0, -this.bg1.height, "background2");
-
-    // Set the origin to top-left corner
-    this.bg1.setOrigin(0, 0);
-    this.bg2.setOrigin(0, 0);
-
-    // Scale up the backgrounds to cover the screen width
-    const scaleX = window.innerWidth / this.bg1.width;
-    const scaleY = scaleX; // Keep aspect ratio
-    this.bg1.setScale(scaleX + 0.1); // Add a little extra to ensure full coverage
-    this.bg2.setScale(scaleX + 0.1);
-
-    // Reposition bg2 after scaling
-    this.bg2.y = -this.bg1.displayHeight;
-
-    // Create player with position relative to screen height
-    this.player = this.physics.add.sprite(
-      window.innerWidth / 2,
-      window.innerHeight * 0.8,
-      "player"
-    );
-    this.player.setCollideWorldBounds(true);
-    this.player.setScale(0.125);
-    this.player.setAngle(0);
-
-    // Adjust movement physics for more dynamic control
-    this.player.setDragX(1500); // Increased drag for quicker stop
-    this.player.setDragY(1500); // Add vertical drag
-    this.player.setMaxVelocity(400, 400); // Allow max speed in both directions
-    this.player.setAcceleration(0, 0); // Initialize acceleration
-
-    // Enable pixel-perfect movement
-    this.player.setX(Math.round(this.player.x));
     this.physics.world.setBoundsCollision(true, true, true, true);
 
-    // Setup controls
-    this.cursors = this.input.keyboard!.createCursorKeys();
-
-    // Create groups for lasers and enemies
-    this.lasers = this.physics.add.group();
-    this.enemies = this.physics.add.group();
-
-    // Spawn enemies periodically
-    this.time.addEvent({
-      delay: 2000,
-      callback: this.spawnEnemy,
-      callbackScope: this,
-      loop: true,
-    });
+    // Initialize managers
+    this.backgroundManager = new BackgroundManager(this);
+    this.playerManager = new PlayerManager(this);
+    this.weaponManager = new WeaponManager(this);
+    this.enemyManager = new EnemyManager(this);
 
     // Setup collisions
     this.physics.add.collider(
-      this.lasers,
-      this.enemies,
+      this.weaponManager.getLasers(),
+      this.enemyManager.getEnemies(),
       (object1, object2) => {
         const laser = object1 as Phaser.Physics.Arcade.Sprite;
         const enemy = object2 as Phaser.Physics.Arcade.Sprite;
@@ -94,94 +50,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   update(time: number) {
-    if (!this.player.body) return;
-
-    // Handle player movement with acceleration
-    const acceleration = 2000; // High acceleration for responsive movement
-
-    // Horizontal movement
-    if (this.cursors.left.isDown) {
-      const boost = this.player.body?.velocity.x < 0 ? 1.2 : 1;
-      this.player.setAccelerationX(-acceleration * boost);
-    } else if (this.cursors.right.isDown) {
-      const boost = this.player.body?.velocity.x > 0 ? 1.2 : 1;
-      this.player.setAccelerationX(acceleration * boost);
-    } else {
-      this.player.setAccelerationX(0);
-    }
-
-    // Vertical movement
-    if (this.cursors.up.isDown) {
-      const boost = this.player.body?.velocity.y < 0 ? 1.2 : 1;
-      this.player.setAccelerationY(-acceleration * boost);
-    } else if (this.cursors.down.isDown) {
-      const boost = this.player.body?.velocity.y > 0 ? 1.2 : 1;
-      this.player.setAccelerationY(acceleration * boost);
-    } else {
-      this.player.setAccelerationY(0);
-    }
-
-    // Round position to prevent shimmering
-    this.player.setX(Math.round(this.player.x));
-    this.player.setY(Math.round(this.player.y));
+    // Update all managers
+    this.playerManager.update();
+    this.backgroundManager.update();
 
     // Handle shooting
-    if (this.cursors.space.isDown && time > this.lastFired + this.fireDelay) {
-      this.fireLaser();
-      this.lastFired = time;
+    const player = this.playerManager.getPlayer();
+    if (this.playerManager.getCursors().space.isDown) {
+      this.weaponManager.fireLaser(player.x, player.y, time);
     }
 
-    // Clean up off-screen objects
-    this.cleanupOffscreenObjects();
-
-    // Scroll both backgrounds downward
-    this.bg1.y += 2; // Adjust speed as needed
-    this.bg2.y += 2;
-
-    // When bg1 moves completely off screen, place it above bg2
-    if (this.bg1.y >= this.cameras.main.height) {
-      this.bg1.y = this.bg2.y - this.bg1.displayHeight;
-    }
-
-    // When bg2 moves completely off screen, place it above bg1
-    if (this.bg2.y >= this.cameras.main.height) {
-      this.bg2.y = this.bg1.y - this.bg2.displayHeight;
-    }
-  }
-
-  private fireLaser() {
-    const laser = this.lasers.create(
-      this.player.x,
-      this.player.y - 20,
-      "laser"
-    );
-    laser.setVelocityY(-300);
-  }
-
-  private spawnEnemy() {
-    const margin = 50;
-    const x = Phaser.Math.Between(margin, window.innerWidth - margin);
-    const enemy = this.enemies.create(x, 50, "enemy");
-    enemy.setVelocityY(100);
-  }
-
-  private cleanupOffscreenObjects() {
-    this.lasers
-      .getChildren()
-      .forEach((laser: Phaser.GameObjects.GameObject) => {
-        const sprite = laser as Phaser.Physics.Arcade.Sprite;
-        if (sprite.y < 0) {
-          sprite.destroy();
-        }
-      });
-
-    this.enemies
-      .getChildren()
-      .forEach((enemy: Phaser.GameObjects.GameObject) => {
-        const sprite = enemy as Phaser.Physics.Arcade.Sprite;
-        if (sprite.y > window.innerHeight) {
-          sprite.destroy();
-        }
-      });
+    // Cleanup off-screen objects
+    this.weaponManager.cleanup();
+    this.enemyManager.cleanup();
   }
 }
