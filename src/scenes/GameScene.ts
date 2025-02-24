@@ -56,6 +56,7 @@ export class GameScene extends Phaser.Scene {
     // Update all managers
     this.playerManager.update();
     this.backgroundManager.update();
+    this.enemyManager.update();
 
     // Handle shooting
     const player = this.playerManager.getPlayer();
