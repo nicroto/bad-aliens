@@ -61,12 +61,56 @@ export class EnemyManager {
   private shootAtPlayer(enemy: Phaser.Physics.Arcade.Sprite) {
     const currentTime = this.scene.time.now;
     const lastShot = enemy.getData("lastShot") || 0;
+    const enemyType = enemy.getData("type");
     const shootingDelay = 2000; // Shoot every 2 seconds
 
     if (currentTime - lastShot >= shootingDelay) {
-      const bullet = this.enemyBullets.create(enemy.x, enemy.y + 20, "laser");
-      bullet.setScale(0.5);
-      bullet.setTint(0xff0000); // Make enemy bullets red
+      // Create bullet with custom texture based on enemy type
+      const bullet = this.enemyBullets.create(
+        enemy.x,
+        enemy.y + 20,
+        `bullet-${enemyType}`
+      );
+      bullet.setScale(1);
+
+      // Add rotation effect based on enemy type
+      switch (enemyType) {
+        case 1: // Energy ball - gentle spin
+          this.scene.tweens.add({
+            targets: bullet,
+            angle: 360,
+            duration: 2000,
+            repeat: -1,
+          });
+          break;
+        case 2: // Plasma bolt - quick spin
+          this.scene.tweens.add({
+            targets: bullet,
+            angle: 360,
+            duration: 1000,
+            repeat: -1,
+          });
+          break;
+        case 3: // Fire orb - pulsing scale
+          this.scene.tweens.add({
+            targets: bullet,
+            scaleX: 1.2,
+            scaleY: 1.2,
+            duration: 500,
+            yoyo: true,
+            repeat: -1,
+          });
+          break;
+        case 4: // Lightning bolt - flash effect
+          this.scene.tweens.add({
+            targets: bullet,
+            alpha: 0.6,
+            duration: 100,
+            yoyo: true,
+            repeat: -1,
+          });
+          break;
+      }
 
       // Calculate angle to player
       const angle = Phaser.Math.Angle.Between(
@@ -76,13 +120,29 @@ export class EnemyManager {
         this.player.y
       );
 
-      // Set bullet velocity based on angle
-      const speed = 200;
+      // Set bullet velocity based on enemy type
+      let speed = 200;
+      switch (enemyType) {
+        case 1: // Energy ball - slower but tracks better
+          speed = 150;
+          break;
+        case 2: // Plasma bolt - fastest
+          speed = 300;
+          break;
+        case 3: // Fire orb - medium speed
+          speed = 200;
+          break;
+        case 4: // Lightning bolt - variable speed
+          speed = 250 + Math.random() * 100;
+          break;
+      }
+
       this.scene.physics.velocityFromRotation(
         angle,
         speed,
         bullet.body.velocity
       );
+      bullet.setRotation(angle + Math.PI / 2); // Align bullet with movement direction
 
       enemy.setData("lastShot", currentTime);
     }

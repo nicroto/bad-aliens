@@ -14,6 +14,75 @@ export class GameScene extends Phaser.Scene {
     super({ key: "GameScene" });
   }
 
+  private generateBulletTextures() {
+    // Energy ball bullet (for enemy type 1)
+    const energyBall = this.add.graphics();
+    energyBall.lineStyle(2, 0xff00ff);
+    energyBall.fillStyle(0xff00ff, 0.5);
+    energyBall.strokeCircle(8, 8, 8);
+    energyBall.fillCircle(8, 8, 8);
+    energyBall.lineStyle(2, 0xffffff);
+    energyBall.strokeCircle(6, 6, 3);
+    energyBall.generateTexture("bullet-1", 16, 16);
+    energyBall.destroy();
+
+    // Plasma bolt (for enemy type 2)
+    const plasmaBolt = this.add.graphics();
+    plasmaBolt.lineStyle(2, 0x00ffff);
+    plasmaBolt.fillStyle(0x00ffff, 0.6);
+    plasmaBolt.beginPath();
+    plasmaBolt.moveTo(8, 0);
+    plasmaBolt.lineTo(16, 8);
+    plasmaBolt.lineTo(8, 16);
+    plasmaBolt.lineTo(0, 8);
+    plasmaBolt.closePath();
+    plasmaBolt.strokePath();
+    plasmaBolt.fillPath();
+    plasmaBolt.generateTexture("bullet-2", 16, 16);
+    plasmaBolt.destroy();
+
+    // Fire orb (for enemy type 3)
+    const fireOrb = this.add.graphics();
+    fireOrb.lineStyle(2, 0xff4400);
+    fireOrb.fillStyle(0xff8800, 0.7);
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x = Math.cos(angle) * 8 + 8;
+      const y = Math.sin(angle) * 8 + 8;
+      if (i === 0) {
+        fireOrb.moveTo(x, y);
+      } else {
+        fireOrb.lineTo(x, y);
+      }
+    }
+    fireOrb.closePath();
+    fireOrb.strokePath();
+    fireOrb.fillPath();
+    fireOrb.generateTexture("bullet-3", 16, 16);
+    fireOrb.destroy();
+
+    // Lightning bolt (for enemy type 4)
+    const lightningBolt = this.add.graphics();
+    lightningBolt.lineStyle(2, 0xffff00);
+    lightningBolt.fillStyle(0xffff00, 0.6);
+    lightningBolt.beginPath();
+    lightningBolt.moveTo(8, 0);
+    lightningBolt.lineTo(12, 6);
+    lightningBolt.lineTo(16, 8);
+    lightningBolt.lineTo(12, 10);
+    lightningBolt.lineTo(14, 16);
+    lightningBolt.lineTo(8, 12);
+    lightningBolt.lineTo(2, 16);
+    lightningBolt.lineTo(4, 10);
+    lightningBolt.lineTo(0, 8);
+    lightningBolt.lineTo(4, 6);
+    lightningBolt.closePath();
+    lightningBolt.strokePath();
+    lightningBolt.fillPath();
+    lightningBolt.generateTexture("bullet-4", 16, 16);
+    lightningBolt.destroy();
+  }
+
   preload() {
     // Load assets
     this.load.image("player", "assets/player.png");
@@ -27,6 +96,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
+    // Generate bullet textures
+    this.generateBulletTextures();
+
     // Set physics to use fixed time step
     this.physics.world.fixedStep = true;
     this.physics.world.setBoundsCollision(true, true, true, true);
