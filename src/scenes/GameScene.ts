@@ -15,6 +15,29 @@ export class GameScene extends Phaser.Scene {
   }
 
   private generateBulletTextures() {
+    // Player bullet
+    const playerBullet = this.add.graphics();
+    // Outer glow
+    playerBullet.lineStyle(2, 0x00ffff, 0.8);
+    playerBullet.fillStyle(0x00ffff, 0.3);
+    playerBullet.strokeCircle(8, 8, 7);
+    playerBullet.fillCircle(8, 8, 7);
+    // Inner core
+    playerBullet.lineStyle(2, 0xffffff);
+    playerBullet.fillStyle(0xffffff, 0.8);
+    playerBullet.strokeCircle(8, 8, 4);
+    playerBullet.fillCircle(8, 8, 4);
+    // Energy trails
+    playerBullet.lineStyle(1, 0x00ffff, 0.5);
+    playerBullet.beginPath();
+    playerBullet.moveTo(8, 0);
+    playerBullet.lineTo(8, 16);
+    playerBullet.moveTo(0, 8);
+    playerBullet.lineTo(16, 8);
+    playerBullet.strokePath();
+    playerBullet.generateTexture("player-bullet", 16, 16);
+    playerBullet.destroy();
+
     // Energy ball bullet (for enemy type 1)
     const energyBall = this.add.graphics();
     energyBall.lineStyle(2, 0xff00ff);
