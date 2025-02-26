@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { PlayerManager } from "./PlayerManager";
 
 export class EnemyManager {
   private enemies: Phaser.Physics.Arcade.Group;
@@ -6,10 +7,16 @@ export class EnemyManager {
   private scene: Phaser.Scene;
   private readonly baseSpeed = 100;
   private player: Phaser.Physics.Arcade.Sprite;
+  private playerManager: PlayerManager;
 
-  constructor(scene: Phaser.Scene, player: Phaser.Physics.Arcade.Sprite) {
+  constructor(
+    scene: Phaser.Scene,
+    player: Phaser.Physics.Arcade.Sprite,
+    playerManager: PlayerManager
+  ) {
     this.scene = scene;
     this.player = player;
+    this.playerManager = playerManager;
     this.enemies = this.scene.physics.add.group();
     this.enemyBullets = this.scene.physics.add.group();
     this.setupEnemySpawning();
@@ -60,6 +67,9 @@ export class EnemyManager {
   }
 
   private shootAtPlayer(enemy: Phaser.Physics.Arcade.Sprite) {
+    // Don't shoot if game is over
+    if (this.playerManager.isGameOver()) return;
+
     const currentTime = this.scene.time.now;
     const lastShot = enemy.getData("lastShot") || 0;
     const enemyType = enemy.getData("type");

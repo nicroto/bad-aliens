@@ -134,7 +134,11 @@ export class GameScene extends Phaser.Scene {
     this.backgroundManager = new BackgroundManager(this);
     this.playerManager = new PlayerManager(this);
     this.weaponManager = new WeaponManager(this);
-    this.enemyManager = new EnemyManager(this, this.playerManager.getPlayer());
+    this.enemyManager = new EnemyManager(
+      this,
+      this.playerManager.getPlayer(),
+      this.playerManager
+    );
     this.scoreManager = new ScoreManager(this);
 
     // Initialize debug panel if enabled
@@ -186,20 +190,34 @@ export class GameScene extends Phaser.Scene {
       this
     );
 
-    // Setup collisions between enemy bullets and player
-    this.physics.add.collider(
-      this.enemyManager.getEnemyBullets(),
-      this.playerManager.getPlayer(),
-      (object1, object2) => {
-        const bullet = object1 as Phaser.Physics.Arcade.Sprite;
-        createExplosion(bullet.x, bullet.y);
-        bullet.destroy();
-        // Here you could add player damage/death logic
-        console.log("Player hit by enemy bullet!");
-      },
-      undefined,
-      this
-    );
+    // Setup collision handlers for player
+    const setupCollisions = (player: Phaser.Physics.Arcade.Sprite) => {
+      // Setup collisions between enemy bullets and player
+      this.physics.add.collider(
+        this.enemyManager.getEnemyBullets(),
+        player,
+        // Collision handler - only called when processCallback returns true
+        (object1, object2) => {
+          const bullet = object1 as Phaser.Physics.Arcade.Sprite;
+          createExplosion(bullet.x, bullet.y);
+          bullet.destroy();
+          this.playerManager.handlePlayerHit();
+        },
+        // Process callback - determines if collision should occur
+        (bullet, playerSprite) => {
+          return !this.playerManager.isInvulnerable();
+        },
+        this
+      );
+    };
+
+    // Setup initial collisions
+    setupCollisions(this.playerManager.getPlayer());
+
+    // Listen for player changes
+    this.playerManager.onPlayerChange((newPlayer) => {
+      setupCollisions(newPlayer);
+    });
 
     // Setup collisions between player lasers and enemy bullets
     this.physics.add.collider(
@@ -304,14 +322,18 @@ export class GameScene extends Phaser.Scene {
 
   update(time: number) {
     // Update all managers
-    this.playerManager.update();
     this.backgroundManager.update();
-    this.enemyManager.update();
+    this.playerManager.update();
 
-    // Handle shooting
-    const player = this.playerManager.getPlayer();
-    if (this.playerManager.getCursors().space.isDown) {
-      this.weaponManager.fireLaser(player.x, player.y, time);
+    // Only update enemy manager and handle shooting if game is not over
+    if (!this.playerManager.isGameOver()) {
+      this.enemyManager.update();
+
+      // Handle shooting
+      const player = this.playerManager.getPlayer();
+      if (this.playerManager.getCursors().space.isDown) {
+        this.weaponManager.fireLaser(player.x, player.y, time);
+      }
     }
 
     // Cleanup off-screen objects
