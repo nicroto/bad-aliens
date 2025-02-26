@@ -135,6 +135,33 @@ export class GameScene extends Phaser.Scene {
     this.enemyManager = new EnemyManager(this, this.playerManager.getPlayer());
     this.scoreManager = new ScoreManager(this);
 
+    // Helper function to create explosion at collision point
+    const createExplosion = (x: number, y: number) => {
+      const explosion = this.add.graphics();
+      explosion.lineStyle(2, 0xffff00, 1);
+      explosion.fillStyle(0xffffff, 0.8);
+
+      // Draw explosion centered at collision point
+      explosion.setPosition(x, y);
+      explosion.beginPath();
+      explosion.arc(0, 0, 20, 0, Math.PI * 2);
+      explosion.closePath();
+      explosion.strokePath();
+      explosion.fillPath();
+
+      // Add fade out effect that expands from center
+      this.tweens.add({
+        targets: explosion,
+        alpha: 0,
+        scaleX: 2,
+        scaleY: 2,
+        duration: 200,
+        onComplete: () => {
+          explosion.destroy();
+        },
+      });
+    };
+
     // Setup collisions between player lasers and enemies
     this.physics.add.collider(
       this.weaponManager.getLasers(),
@@ -144,6 +171,7 @@ export class GameScene extends Phaser.Scene {
         const enemy = object2 as Phaser.Physics.Arcade.Sprite;
         const enemyType = enemy.getData("type");
         this.scoreManager.addPoints(enemyType);
+        createExplosion(enemy.x, enemy.y);
         laser.destroy();
         enemy.destroy();
       },
@@ -157,9 +185,58 @@ export class GameScene extends Phaser.Scene {
       this.playerManager.getPlayer(),
       (object1, object2) => {
         const bullet = object1 as Phaser.Physics.Arcade.Sprite;
+        createExplosion(bullet.x, bullet.y);
         bullet.destroy();
         // Here you could add player damage/death logic
         console.log("Player hit by enemy bullet!");
+      },
+      undefined,
+      this
+    );
+
+    // Setup collisions between player lasers and enemy bullets
+    this.physics.add.collider(
+      this.weaponManager.getLasers(),
+      this.enemyManager.getEnemyBullets(),
+      (object1, object2) => {
+        const playerBullet = object1 as Phaser.Physics.Arcade.Sprite;
+        const enemyBullet = object2 as Phaser.Physics.Arcade.Sprite;
+
+        // Create explosion at midpoint between bullets
+        const x = (playerBullet.x + enemyBullet.x) / 2;
+        const y = (playerBullet.y + enemyBullet.y) / 2;
+        createExplosion(x, y);
+
+        // Destroy both bullets
+        playerBullet.destroy();
+        enemyBullet.destroy();
+
+        // Clean up any associated glow effects
+        const glow = playerBullet.getData("glow");
+        if (glow) {
+          glow.destroy();
+        }
+      },
+      undefined,
+      this
+    );
+
+    // Setup collisions between enemy bullets
+    this.physics.add.collider(
+      this.enemyManager.getEnemyBullets(),
+      this.enemyManager.getEnemyBullets(),
+      (object1, object2) => {
+        const bullet1 = object1 as Phaser.Physics.Arcade.Sprite;
+        const bullet2 = object2 as Phaser.Physics.Arcade.Sprite;
+
+        // Create explosion at midpoint between bullets
+        const x = (bullet1.x + bullet2.x) / 2;
+        const y = (bullet1.y + bullet2.y) / 2;
+        createExplosion(x, y);
+
+        // Destroy both bullets
+        bullet1.destroy();
+        bullet2.destroy();
       },
       undefined,
       this
