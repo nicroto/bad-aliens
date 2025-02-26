@@ -209,6 +209,36 @@ export class GameScene extends Phaser.Scene {
         },
         this
       );
+
+      // Setup collisions between player and enemies
+      this.physics.add.collider(
+        player,
+        this.enemyManager.getEnemies(),
+        (object1, object2) => {
+          const player = object1 as Phaser.Physics.Arcade.Sprite;
+          const enemy = object2 as Phaser.Physics.Arcade.Sprite;
+
+          // Create explosion at the collision point
+          const x = (player.x + enemy.x) / 2;
+          const y = (player.y + enemy.y) / 2;
+          createExplosion(x, y);
+
+          // Add points for the destroyed enemy
+          const enemyType = enemy.getData("type");
+          this.scoreManager.addPoints(enemyType);
+
+          // Destroy the enemy
+          enemy.destroy();
+
+          // Handle player hit (this will handle player destruction and respawn)
+          this.playerManager.handlePlayerHit();
+        },
+        // Process callback - determines if collision should occur
+        (player, enemy) => {
+          return !this.playerManager.isInvulnerable();
+        },
+        this
+      );
     };
 
     // Setup initial collisions
