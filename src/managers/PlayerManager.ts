@@ -18,6 +18,13 @@ export class PlayerManager {
     this.cursors = this.scene.input.keyboard!.createCursorKeys();
     this.player = this.createPlayer();
     this.createLifeIndicators();
+
+    // Check if we should show game over screen immediately
+    if ((window as any).SHOW_GAME_OVER) {
+      this.gameOver = true;
+      this.player.setVisible(false);
+      this.createGameOverScreen();
+    }
   }
 
   private createPlayer(): Phaser.Physics.Arcade.Sprite {
@@ -91,21 +98,25 @@ export class PlayerManager {
     const color = 0xff0000;
 
     // Pixel art for "GAME"
+    // Letters defined in a 5x5 grid with a 1-column gap between letters.
     const gamePixels = [
-      "0111110001111100111110001111100",
-      "0100000001000000100010001000000",
-      "0111100001111100111110001111100",
-      "0100010001000000100010001000000",
-      "0111110001111100100010001111100",
+      // G         A         M         E
+      "01110" + "0" + "01110" + "0" + "10001" + "0" + "11111", // row 1
+      "10001" + "0" + "10001" + "0" + "11011" + "0" + "10000", // row 2
+      "10000" + "0" + "11111" + "0" + "10101" + "0" + "11110", // row 3
+      "10111" + "0" + "10001" + "0" + "10001" + "0" + "10000", // row 4
+      "01110" + "0" + "10001" + "0" + "10001" + "0" + "11111", // row 5
     ];
 
     // Pixel art for "OVER"
+    // Letters defined similarly in a 5x5 grid with a 1-column gap between letters.
     const overPixels = [
-      "0111110011111001111100111110",
-      "0100010010000001000100100010",
-      "0100010011111001111100100010",
-      "0100010010000001000100100010",
-      "0111110011111001000100111110",
+      // O         V         E         R
+      "01110" + "0" + "10001" + "0" + "11111" + "0" + "11110", // row 1
+      "10001" + "0" + "10001" + "0" + "10000" + "0" + "10001", // row 2
+      "10001" + "0" + "01010" + "0" + "11110" + "0" + "11110", // row 3
+      "10001" + "0" + "01010" + "0" + "10000" + "0" + "10100", // row 4
+      "01110" + "0" + "00100" + "0" + "11111" + "0" + "10010", // row 5
     ];
 
     // Helper function to create pixel grid
@@ -126,9 +137,9 @@ export class PlayerManager {
       });
     };
 
-    // Create both words
-    createPixelText(gamePixels, -7);
-    createPixelText(overPixels, 0);
+    // Create both words with more spacing between them
+    createPixelText(gamePixels, -8);
+    createPixelText(overPixels, 2);
   }
 
   handlePlayerHit() {

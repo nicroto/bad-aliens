@@ -6,6 +6,7 @@ const params = new URLSearchParams(window.location.search);
 (window as any).GAME_DEBUG =
   params.get("debug") === "true" ||
   localStorage.getItem("GAME_DEBUG") === "true";
+(window as any).SHOW_GAME_OVER = params.get("gameOver") === "true";
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
