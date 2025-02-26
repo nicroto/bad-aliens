@@ -28,7 +28,8 @@ export class EnemyManager {
     const margin = 50;
     const x = Phaser.Math.Between(margin, window.innerWidth - margin);
     const enemyNumber = Phaser.Math.Between(1, 4);
-    const enemy = this.enemies.create(x, 50, `enemy-${enemyNumber}`);
+    const y = -50; // This ensures they start off-screen
+    const enemy = this.enemies.create(x, y, `enemy-${enemyNumber}`);
     enemy.setScale(0.25);
     enemy.setAngle(180); // Rotate to face downward
 
@@ -210,7 +211,7 @@ export class EnemyManager {
       .getChildren()
       .forEach((enemy: Phaser.GameObjects.GameObject) => {
         const sprite = enemy as Phaser.Physics.Arcade.Sprite;
-        if (sprite.y > window.innerHeight) {
+        if (sprite.y > window.innerHeight + 50) {
           sprite.destroy();
         }
       });
@@ -221,10 +222,10 @@ export class EnemyManager {
       .forEach((bullet: Phaser.GameObjects.GameObject) => {
         const sprite = bullet as Phaser.Physics.Arcade.Sprite;
         if (
-          sprite.y > window.innerHeight ||
-          sprite.y < 0 ||
-          sprite.x < 0 ||
-          sprite.x > window.innerWidth
+          sprite.y > window.innerHeight + 50 ||
+          sprite.y < -50 ||
+          sprite.x < -50 ||
+          sprite.x > window.innerWidth + 50
         ) {
           sprite.destroy();
         }
