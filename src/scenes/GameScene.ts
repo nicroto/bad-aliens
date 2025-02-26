@@ -3,12 +3,14 @@ import { PlayerManager } from "../managers/PlayerManager";
 import { BackgroundManager } from "../managers/BackgroundManager";
 import { WeaponManager } from "../managers/WeaponManager";
 import { EnemyManager } from "../managers/EnemyManager";
+import { ScoreManager } from "../managers/ScoreManager";
 
 export class GameScene extends Phaser.Scene {
   private playerManager!: PlayerManager;
   private backgroundManager!: BackgroundManager;
   private weaponManager!: WeaponManager;
   private enemyManager!: EnemyManager;
+  private scoreManager!: ScoreManager;
 
   constructor() {
     super({ key: "GameScene" });
@@ -131,6 +133,7 @@ export class GameScene extends Phaser.Scene {
     this.playerManager = new PlayerManager(this);
     this.weaponManager = new WeaponManager(this);
     this.enemyManager = new EnemyManager(this, this.playerManager.getPlayer());
+    this.scoreManager = new ScoreManager(this);
 
     // Setup collisions between player lasers and enemies
     this.physics.add.collider(
@@ -139,6 +142,8 @@ export class GameScene extends Phaser.Scene {
       (object1, object2) => {
         const laser = object1 as Phaser.Physics.Arcade.Sprite;
         const enemy = object2 as Phaser.Physics.Arcade.Sprite;
+        const enemyType = enemy.getData("type");
+        this.scoreManager.addPoints(enemyType);
         laser.destroy();
         enemy.destroy();
       },
