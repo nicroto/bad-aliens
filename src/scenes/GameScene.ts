@@ -241,6 +241,58 @@ export class GameScene extends Phaser.Scene {
       undefined,
       this
     );
+
+    // Setup collisions between enemies
+    this.physics.add.collider(
+      this.enemyManager.getEnemies(),
+      this.enemyManager.getEnemies(),
+      (object1, object2) => {
+        const enemy1 = object1 as Phaser.Physics.Arcade.Sprite;
+        const enemy2 = object2 as Phaser.Physics.Arcade.Sprite;
+
+        // Create explosion at midpoint between enemies
+        const x = (enemy1.x + enemy2.x) / 2;
+        const y = (enemy1.y + enemy2.y) / 2;
+        createExplosion(x, y);
+
+        // Add points for both enemies
+        const enemy1Type = enemy1.getData("type");
+        const enemy2Type = enemy2.getData("type");
+        this.scoreManager.addPoints(enemy1Type);
+        this.scoreManager.addPoints(enemy2Type);
+
+        // Destroy both enemies
+        enemy1.destroy();
+        enemy2.destroy();
+      },
+      undefined,
+      this
+    );
+
+    // Setup collisions between enemy bullets and other enemies
+    this.physics.add.collider(
+      this.enemyManager.getEnemyBullets(),
+      this.enemyManager.getEnemies(),
+      (object1, object2) => {
+        const bullet = object1 as Phaser.Physics.Arcade.Sprite;
+        const enemy = object2 as Phaser.Physics.Arcade.Sprite;
+
+        // Create explosion at the collision point
+        const x = (bullet.x + enemy.x) / 2;
+        const y = (bullet.y + enemy.y) / 2;
+        createExplosion(x, y);
+
+        // Add points for the destroyed enemy
+        const enemyType = enemy.getData("type");
+        this.scoreManager.addPoints(enemyType);
+
+        // Destroy both the bullet and the enemy
+        bullet.destroy();
+        enemy.destroy();
+      },
+      undefined,
+      this
+    );
   }
 
   update(time: number) {
