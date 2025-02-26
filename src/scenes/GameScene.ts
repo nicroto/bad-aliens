@@ -4,6 +4,7 @@ import { BackgroundManager } from "../managers/BackgroundManager";
 import { WeaponManager } from "../managers/WeaponManager";
 import { EnemyManager } from "../managers/EnemyManager";
 import { ScoreManager } from "../managers/ScoreManager";
+import { DebugPanel } from "../managers/DebugPanel";
 
 export class GameScene extends Phaser.Scene {
   private playerManager!: PlayerManager;
@@ -11,6 +12,7 @@ export class GameScene extends Phaser.Scene {
   private weaponManager!: WeaponManager;
   private enemyManager!: EnemyManager;
   private scoreManager!: ScoreManager;
+  private debugPanel?: DebugPanel;
 
   constructor() {
     super({ key: "GameScene" });
@@ -134,6 +136,11 @@ export class GameScene extends Phaser.Scene {
     this.weaponManager = new WeaponManager(this);
     this.enemyManager = new EnemyManager(this, this.playerManager.getPlayer());
     this.scoreManager = new ScoreManager(this);
+
+    // Initialize debug panel if enabled
+    if (DebugPanel.isEnabled()) {
+      this.debugPanel = new DebugPanel(this);
+    }
 
     // Helper function to create explosion at collision point
     const createExplosion = (x: number, y: number) => {
@@ -310,5 +317,16 @@ export class GameScene extends Phaser.Scene {
     // Cleanup off-screen objects
     this.weaponManager.cleanup();
     this.enemyManager.cleanup();
+
+    // Update debug panel if enabled
+    if (this.debugPanel) {
+      const fps = this.game.loop.actualFps;
+      const enemyCount = this.enemyManager.getEnemies().getLength();
+      const bulletCount =
+        this.weaponManager.getLasers().getLength() +
+        this.enemyManager.getEnemyBullets().getLength();
+
+      this.debugPanel.update(fps, enemyCount, bulletCount);
+    }
   }
 }
