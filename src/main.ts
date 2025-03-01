@@ -1,5 +1,6 @@
 import "phaser";
 import { GameScene } from "./scenes/GameScene";
+import { MenuScene } from "./scenes/MenuScene";
 
 // Set debug mode from URL parameter or localStorage
 const params = new URLSearchParams(window.location.search);
@@ -19,7 +20,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: (window as any).GAME_DEBUG, // Enable physics debug when in debug mode
     },
   },
-  scene: GameScene,
+  scene: [GameScene, MenuScene],
   scale: {
     mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,

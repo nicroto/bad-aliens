@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import { PlayerManager } from "./PlayerManager";
+import { AudioManager } from "./AudioManager";
 
 export class EnemyManager {
   private enemies: Phaser.Physics.Arcade.Group;
@@ -8,15 +9,18 @@ export class EnemyManager {
   private readonly baseSpeed = 100;
   private player: Phaser.Physics.Arcade.Sprite;
   private playerManager: PlayerManager;
+  private audioManager: AudioManager;
 
   constructor(
     scene: Phaser.Scene,
     player: Phaser.Physics.Arcade.Sprite,
-    playerManager: PlayerManager
+    playerManager: PlayerManager,
+    audioManager: AudioManager
   ) {
     this.scene = scene;
     this.player = player;
     this.playerManager = playerManager;
+    this.audioManager = audioManager;
     this.enemies = this.scene.physics.add.group();
     this.enemyBullets = this.scene.physics.add.group();
     this.setupEnemySpawning();
@@ -76,6 +80,9 @@ export class EnemyManager {
     const shootingDelay = 2000; // Shoot every 2 seconds
 
     if (currentTime - lastShot >= shootingDelay) {
+      // Play enemy shoot sound
+      this.audioManager.playEnemyShootSound(enemyType);
+
       // Create bullet with custom texture based on enemy type
       const bullet = this.enemyBullets.create(
         enemy.x,

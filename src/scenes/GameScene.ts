@@ -124,7 +124,21 @@ export class GameScene extends Phaser.Scene {
     this.load.image("background2", "assets/background-2.png");
 
     // Load background music
-    this.load.audio("background-music", "assets/soundtrack-1.mp3");
+    this.load.audio("background-music", "assets/sounds/soundtrack-1.mp3");
+
+    // Load player weapon sounds
+    this.load.audio("player-shoot-1", "assets/sounds/player-laser-1.mp3");
+    this.load.audio("player-shoot-2", "assets/sounds/player-laser-2.mp3");
+    this.load.audio("player-shoot-3", "assets/sounds/player-laser-3.mp3");
+
+    // Load enemy weapon sounds
+    this.load.audio("enemy-shoot-1", "assets/sounds/enemy-energy-1.mp3");
+    this.load.audio("enemy-shoot-2", "assets/sounds/enemy-plasma-2.mp3");
+    this.load.audio("enemy-shoot-3", "assets/sounds/enemy-fire-3.mp3");
+    this.load.audio("enemy-shoot-4", "assets/sounds/enemy-lightning-4.mp3");
+
+    // Load explosion sound
+    this.load.audio("explosion", "assets/sounds/explosion.mp3");
   }
 
   create() {
@@ -138,14 +152,18 @@ export class GameScene extends Phaser.Scene {
     // Initialize managers
     this.backgroundManager = new BackgroundManager(this);
     this.playerManager = new PlayerManager(this);
-    this.weaponManager = new WeaponManager(this);
+    this.audioManager = new AudioManager(this);
+    this.weaponManager = new WeaponManager(this, this.audioManager);
     this.enemyManager = new EnemyManager(
       this,
       this.playerManager.getPlayer(),
-      this.playerManager
+      this.playerManager,
+      this.audioManager
     );
     this.scoreManager = new ScoreManager(this);
-    this.audioManager = new AudioManager(this);
+
+    // Initialize sound effects
+    this.audioManager.initSoundEffects();
 
     // Start background music
     this.audioManager.playBackgroundMusic();
@@ -154,6 +172,14 @@ export class GameScene extends Phaser.Scene {
     if (DebugPanel.isEnabled()) {
       this.debugPanel = new DebugPanel(this);
     }
+
+    // Add ESC key handler for menu
+    this.input.keyboard.on("keydown-ESC", () => {
+      if (!this.playerManager.isGameOver()) {
+        this.scene.pause();
+        this.scene.launch("MenuScene", { audioManager: this.audioManager });
+      }
+    });
 
     // Helper function to create explosion at collision point
     const createExplosion = (x: number, y: number) => {
@@ -168,6 +194,9 @@ export class GameScene extends Phaser.Scene {
       explosion.closePath();
       explosion.strokePath();
       explosion.fillPath();
+
+      // Play explosion sound
+      this.audioManager.playExplosionSound();
 
       // Add fade out effect that expands from center
       this.tweens.add({

@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "./AudioManager";
 
 export class WeaponManager {
   private lasers: Phaser.Physics.Arcade.Group;
@@ -7,10 +8,12 @@ export class WeaponManager {
   private readonly fireDelay: number = 200; // milliseconds between shots
   private currentWeaponType: number = 1; // Start with single shot
   private readonly bulletSpeed = 300;
+  private audioManager: AudioManager;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, audioManager: AudioManager) {
     this.scene = scene;
     this.lasers = this.scene.physics.add.group();
+    this.audioManager = audioManager;
     this.setupWeaponSwitching();
   }
 
@@ -84,6 +87,9 @@ export class WeaponManager {
     if (time <= this.lastFired + this.fireDelay) {
       return false;
     }
+
+    // Play the appropriate weapon sound
+    this.audioManager.playPlayerShootSound(this.currentWeaponType);
 
     switch (this.currentWeaponType) {
       case 1: // Single shot
