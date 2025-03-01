@@ -5,6 +5,7 @@ import { WeaponManager } from "../managers/WeaponManager";
 import { EnemyManager } from "../managers/EnemyManager";
 import { ScoreManager } from "../managers/ScoreManager";
 import { DebugPanel } from "../managers/DebugPanel";
+import { AudioManager } from "../managers/AudioManager";
 
 export class GameScene extends Phaser.Scene {
   private playerManager!: PlayerManager;
@@ -12,6 +13,7 @@ export class GameScene extends Phaser.Scene {
   private weaponManager!: WeaponManager;
   private enemyManager!: EnemyManager;
   private scoreManager!: ScoreManager;
+  private audioManager!: AudioManager;
   private debugPanel?: DebugPanel;
 
   constructor() {
@@ -120,6 +122,9 @@ export class GameScene extends Phaser.Scene {
     this.load.image("enemy-4", "assets/enemy-4.png");
     this.load.image("background1", "assets/background-1.png");
     this.load.image("background2", "assets/background-2.png");
+
+    // Load background music
+    this.load.audio("background-music", "assets/soundtrack-1.mp3");
   }
 
   create() {
@@ -140,6 +145,10 @@ export class GameScene extends Phaser.Scene {
       this.playerManager
     );
     this.scoreManager = new ScoreManager(this);
+    this.audioManager = new AudioManager(this);
+
+    // Start background music
+    this.audioManager.playBackgroundMusic();
 
     // Initialize debug panel if enabled
     if (DebugPanel.isEnabled()) {
