@@ -43,6 +43,27 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Copy assets to dist
+        run: |
+          # Copy to dist/assets for the paths we fixed
+          mkdir -p dist/assets
+          cp -R public/assets/* dist/assets/
+          echo "Copied public assets to dist/assets"
+
+          # Also copy to dist/public/assets for any paths still using the public/ prefix
+          mkdir -p dist/public/assets
+          cp -R public/assets/* dist/public/assets/
+          echo "Copied public assets to dist/public/assets"
+
+      - name: Debug - List build output
+        run: |
+          echo "Contents of dist directory:"
+          ls -la dist
+          echo "Contents of dist/assets directory:"
+          ls -la dist/assets || echo "No assets directory found"
+          echo "Contents of dist/public/assets directory:"
+          ls -la dist/public/assets || echo "No public/assets directory found"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
