@@ -415,8 +415,9 @@ export class GameScene extends Phaser.Scene {
       const bulletCount =
         this.weaponManager.getLasers().getLength() +
         this.enemyManager.getEnemyBullets().getLength();
+      const soundsCount = this.audioManager.getActiveSoundsCount();
 
-      this.debugPanel.update(fps, enemyCount, bulletCount);
+      this.debugPanel.update(fps, enemyCount, bulletCount, soundsCount);
     }
   }
 }

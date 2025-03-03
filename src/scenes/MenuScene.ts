@@ -11,6 +11,24 @@ export class MenuScene extends Phaser.Scene {
   constructor() {
     super({ key: "MenuScene" });
     this.audioManager = {} as AudioManager; // Will be set when scene starts
+    this.loadSettings();
+  }
+
+  private loadSettings() {
+    const savedBgVolume = localStorage.getItem("backgroundVolume");
+    const savedFxVolume = localStorage.getItem("fxVolume");
+
+    if (savedBgVolume !== null) {
+      this.backgroundVolume = parseFloat(savedBgVolume);
+    }
+    if (savedFxVolume !== null) {
+      this.fxVolume = parseFloat(savedFxVolume);
+    }
+  }
+
+  private saveSettings() {
+    localStorage.setItem("backgroundVolume", this.backgroundVolume.toString());
+    localStorage.setItem("fxVolume", this.fxVolume.toString());
   }
 
   init(data: { audioManager: AudioManager }) {
@@ -65,6 +83,7 @@ export class MenuScene extends Phaser.Scene {
       (value) => {
         this.backgroundVolume = value;
         this.audioManager.setBackgroundVolume(value);
+        this.saveSettings();
       }
     );
 
@@ -78,6 +97,7 @@ export class MenuScene extends Phaser.Scene {
       (value) => {
         this.fxVolume = value;
         this.audioManager.setFXVolume(value);
+        this.saveSettings();
       }
     );
 
@@ -92,6 +112,10 @@ export class MenuScene extends Phaser.Scene {
       restartButton.setStyle({ color: "#ffffff" });
     });
     restartButton.on("pointerdown", () => {
+      // Reset all audio to prevent layering
+      AudioManager.resetAllAudio();
+
+      // Stop and restart the scene
       this.scene.stop("MenuScene");
       this.scene.stop("GameScene");
       this.scene.start("GameScene");

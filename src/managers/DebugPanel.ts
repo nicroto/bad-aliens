@@ -6,6 +6,7 @@ export class DebugPanel {
   private fpsText: Phaser.GameObjects.Text;
   private enemiesText: Phaser.GameObjects.Text;
   private bulletsText: Phaser.GameObjects.Text;
+  private soundsText: Phaser.GameObjects.Text;
   private scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene) {
@@ -16,7 +17,7 @@ export class DebugPanel {
       10,
       window.innerHeight - 100,
       200,
-      90,
+      115, // Increased height to accommodate new text
       0x000000,
       0.7
     );
@@ -47,6 +48,12 @@ export class DebugPanel {
       "Bullets: 0",
       textConfig
     );
+    this.soundsText = scene.add.text(
+      20,
+      window.innerHeight - 15,
+      "Sounds: 0",
+      textConfig
+    );
 
     // Create container and add all elements
     this.container = scene.add.container(0, 0, [
@@ -54,6 +61,7 @@ export class DebugPanel {
       this.fpsText,
       this.enemiesText,
       this.bulletsText,
+      this.soundsText,
     ]);
 
     // Set container to stay fixed on screen
@@ -61,10 +69,16 @@ export class DebugPanel {
     this.container.setDepth(1000); // Ensure it's always on top
   }
 
-  update(fps: number, enemyCount: number, bulletCount: number) {
+  update(
+    fps: number,
+    enemyCount: number,
+    bulletCount: number,
+    soundsCount: number
+  ) {
     this.fpsText.setText(`FPS: ${Math.round(fps)}`);
     this.enemiesText.setText(`Enemies: ${enemyCount}`);
     this.bulletsText.setText(`Bullets: ${bulletCount}`);
+    this.soundsText.setText(`Sounds: ${soundsCount}`);
   }
 
   static isEnabled(): boolean {
