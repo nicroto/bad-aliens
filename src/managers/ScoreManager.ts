@@ -4,6 +4,8 @@ export class ScoreManager {
   private score: number = 0;
   private scoreText: Phaser.GameObjects.Text;
   private scene: Phaser.Scene;
+  private lastLifeRewardScore: number = 0;
+  private onExtraLifeCallbacks: (() => void)[] = [];
 
   // Points for each enemy type
   private static readonly ENEMY_POINTS: { [key: number]: number } = {
@@ -30,6 +32,20 @@ export class ScoreManager {
     const points = ScoreManager.ENEMY_POINTS[enemyType] || 100;
     this.score += points;
     this.updateScoreDisplay();
+
+    // Check if we've crossed a 10,000 point threshold since the last reward
+    if (
+      Math.floor(this.score / 10000) >
+      Math.floor(this.lastLifeRewardScore / 10000)
+    ) {
+      this.triggerExtraLife();
+      this.lastLifeRewardScore = this.score;
+    }
+  }
+
+  private triggerExtraLife() {
+    // Notify all listeners that player earned an extra life
+    this.onExtraLifeCallbacks.forEach((callback) => callback());
   }
 
   private updateScoreDisplay() {
@@ -38,5 +54,9 @@ export class ScoreManager {
 
   getScore(): number {
     return this.score;
+  }
+
+  onExtraLife(callback: () => void) {
+    this.onExtraLifeCallbacks.push(callback);
   }
 }

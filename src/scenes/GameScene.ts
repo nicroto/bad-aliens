@@ -145,21 +145,39 @@ export class GameScene extends Phaser.Scene {
     this.load.image("background2", "assets/background-2.png");
 
     // Load background music
-    this.load.audio("background-music", "assets/sounds/soundtrack-1.mp3");
+    this.load.audio(
+      "background-music",
+      "public/assets/sounds/soundtrack-1.mp3"
+    );
 
     // Load player weapon sounds
-    this.load.audio("player-shoot-1", "assets/sounds/player-laser-1.mp3");
-    this.load.audio("player-shoot-2", "assets/sounds/player-laser-2.mp3");
-    this.load.audio("player-shoot-3", "assets/sounds/player-laser-3.mp3");
+    this.load.audio(
+      "player-shoot-1",
+      "public/assets/sounds/player-laser-1.mp3"
+    );
+    this.load.audio(
+      "player-shoot-2",
+      "public/assets/sounds/player-laser-2.mp3"
+    );
+    this.load.audio(
+      "player-shoot-3",
+      "public/assets/sounds/player-laser-3.mp3"
+    );
 
     // Load enemy weapon sounds
-    this.load.audio("enemy-shoot-1", "assets/sounds/enemy-energy-1.mp3");
-    this.load.audio("enemy-shoot-2", "assets/sounds/enemy-plasma-2.mp3");
-    this.load.audio("enemy-shoot-3", "assets/sounds/enemy-fire-3.mp3");
-    this.load.audio("enemy-shoot-4", "assets/sounds/enemy-lightning-4.mp3");
+    this.load.audio("enemy-shoot-1", "public/assets/sounds/enemy-energy-1.mp3");
+    this.load.audio("enemy-shoot-2", "public/assets/sounds/enemy-plasma-2.mp3");
+    this.load.audio("enemy-shoot-3", "public/assets/sounds/enemy-fire-3.mp3");
+    this.load.audio(
+      "enemy-shoot-4",
+      "public/assets/sounds/enemy-lightning-4.mp3"
+    );
 
     // Load explosion sound
-    this.load.audio("explosion", "assets/sounds/explosion.mp3");
+    this.load.audio("explosion", "public/assets/sounds/explosion.mp3");
+
+    // Load extra life sound
+    this.load.audio("extra-life", "public/assets/sounds/extra-life.mp3");
   }
 
   create() {
@@ -170,18 +188,35 @@ export class GameScene extends Phaser.Scene {
     // Generate bullet textures
     this.generateBulletTextures();
 
-    // Initialize managers in the correct order
-    this.backgroundManager = new BackgroundManager(this);
+    // Create the audio manager
     this.audioManager = new AudioManager(this);
+    this.audioManager.playBackgroundMusic();
+
+    // Create background manager
+    this.backgroundManager = new BackgroundManager(this);
+
+    // Create the player manager
     this.playerManager = new PlayerManager(this, this.audioManager);
+
+    // Create the weapon manager
     this.weaponManager = new WeaponManager(this, this.audioManager);
+
+    // Create the enemy manager
     this.enemyManager = new EnemyManager(
       this,
       this.playerManager.getPlayer(),
       this.playerManager,
       this.audioManager
     );
+
+    // Create score manager
     this.scoreManager = new ScoreManager(this);
+
+    // Setup extra life reward
+    this.scoreManager.onExtraLife(() => {
+      // When player earns an extra life, call the addLife method on the player manager
+      this.playerManager.addLife();
+    });
 
     // Add difficulty level text in the bottom right corner
     this.difficultyText = this.add
@@ -200,10 +235,7 @@ export class GameScene extends Phaser.Scene {
     // Initialize sound effects
     this.audioManager.initSoundEffects();
 
-    // Start background music
-    this.audioManager.playBackgroundMusic();
-
-    // Create debug panel if needed
+    // Create debug panel if enabled
     if (new URLSearchParams(window.location.search).get("debug") === "true") {
       this.debugPanel = new DebugPanel(
         this,

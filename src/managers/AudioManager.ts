@@ -122,12 +122,18 @@ export class AudioManager {
 
   // Play sound for enemy weapons
   playEnemyShootSound(enemyType: number) {
-    this.playSoundEffect(`enemy-shoot-${enemyType}`);
+    const soundKey = `enemy-shoot-${enemyType}`;
+    this.playSoundEffect(soundKey);
   }
 
   // Play explosion sound
   playExplosionSound() {
     this.playSoundEffect("explosion");
+  }
+
+  // Play extra life sound
+  playExtraLifeSound() {
+    this.playSoundEffect("extra-life");
   }
 
   // Helper method to play any sound effect

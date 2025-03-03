@@ -205,6 +205,73 @@ export class PlayerManager {
     this._isInvulnerable = true;
   }
 
+  addLife() {
+    if (this.gameOver) return;
+
+    this.lives++;
+
+    // Add new life indicator
+    const spacing = 45;
+    const edgePadding = 40;
+    const startX = window.innerWidth - edgePadding;
+    const y = 45;
+
+    // Calculate position based on current number of indicators
+    const newIndicatorIndex = this.lifeIndicators.length;
+
+    const indicator = this.scene.add.sprite(
+      startX - newIndicatorIndex * spacing,
+      y,
+      "player"
+    );
+    indicator.setScale(0.068);
+    indicator.setScrollFactor(0);
+    indicator.setDepth(100);
+
+    // Add to the end of the array (visually right-to-left)
+    this.lifeIndicators.push(indicator);
+
+    // Show extra life notification
+    this.showExtraLifeNotification();
+  }
+
+  private showExtraLifeNotification() {
+    // Create a text notification that fades out
+    const notification = this.scene.add.text(
+      window.innerWidth / 2,
+      window.innerHeight / 3,
+      "EXTRA LIFE!",
+      {
+        fontSize: "48px",
+        fontFamily: "Arial",
+        color: "#00ff00",
+        stroke: "#000000",
+        strokeThickness: 6,
+        align: "center",
+      }
+    );
+    notification.setOrigin(0.5);
+    notification.setScrollFactor(0);
+    notification.setDepth(1000);
+
+    // Flash and fade out animation
+    this.scene.tweens.add({
+      targets: notification,
+      alpha: { from: 1, to: 0 },
+      y: window.innerHeight / 3 - 50, // Move up slightly
+      duration: 2000,
+      ease: "Power2",
+      onComplete: () => {
+        notification.destroy();
+      },
+    });
+
+    // Play a sound for extra life if available
+    if (this.audioManager) {
+      this.audioManager.playExtraLifeSound();
+    }
+  }
+
   update(difficultyLevel: number = 1) {
     if (this.gameOver) return;
     if (!this.player.body) return;
