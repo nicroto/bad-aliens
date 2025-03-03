@@ -4,6 +4,7 @@ export class BackgroundManager {
   private bg1: Phaser.GameObjects.Sprite;
   private bg2: Phaser.GameObjects.Sprite;
   private scene: Phaser.Scene;
+  private baseScrollSpeed: number = 2;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -33,10 +34,14 @@ export class BackgroundManager {
     return [bg1, bg2];
   }
 
-  update() {
+  update(difficultyLevel: number = 1) {
+    // Calculate scroll speed based on difficulty level
+    const scrollSpeed =
+      this.baseScrollSpeed * (1 + (difficultyLevel - 1) * 0.2);
+
     // Scroll both backgrounds downward
-    this.bg1.y += 2;
-    this.bg2.y += 2;
+    this.bg1.y += scrollSpeed;
+    this.bg2.y += scrollSpeed;
 
     // When bg1 moves completely off screen, place it above bg2
     if (this.bg1.y >= this.scene.cameras.main.height) {

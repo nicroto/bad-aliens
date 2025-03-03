@@ -205,11 +205,14 @@ export class PlayerManager {
     this._isInvulnerable = true;
   }
 
-  update() {
+  update(difficultyLevel: number = 1) {
     if (this.gameOver) return;
     if (!this.player.body) return;
 
-    const acceleration = 2000;
+    // Base acceleration value
+    const baseAcceleration = 2000;
+    // Scale acceleration with difficulty level
+    const acceleration = baseAcceleration * (1 + (difficultyLevel - 1) * 0.15);
 
     // Horizontal movement
     if (this.cursors.left.isDown) {
@@ -232,6 +235,10 @@ export class PlayerManager {
     } else {
       this.player.setAccelerationY(0);
     }
+
+    // Also increase the maximum velocity based on difficulty
+    const maxVelocity = 400 * (1 + (difficultyLevel - 1) * 0.1);
+    this.player.setMaxVelocity(maxVelocity, maxVelocity);
 
     // Round position to prevent shimmering
     this.player.setX(Math.round(this.player.x));

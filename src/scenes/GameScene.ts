@@ -469,8 +469,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Update all managers
-    this.backgroundManager.update();
-    this.playerManager.update();
+    this.backgroundManager.update(this.difficultyLevel);
+    this.playerManager.update(this.difficultyLevel);
 
     // Only update enemy manager and handle shooting if game is not over
     if (!this.playerManager.isGameOver()) {
