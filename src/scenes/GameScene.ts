@@ -205,7 +205,30 @@ export class GameScene extends Phaser.Scene {
 
     // Create debug panel if needed
     if (new URLSearchParams(window.location.search).get("debug") === "true") {
-      this.debugPanel = new DebugPanel(this);
+      this.debugPanel = new DebugPanel(
+        this,
+        this.difficultyLevel,
+        (level: number) => {
+          // Set the new difficulty level
+          this.difficultyLevel = level;
+
+          // Update the difficulty text display
+          if (this.difficultyText) {
+            this.difficultyText.setText(`${this.difficultyLevel} lvl`);
+          }
+
+          // Don't reset the timer - just update the next increase point
+          this.nextDifficultyIncrease =
+            this.gameTimer + this.difficultyIncreaseInterval;
+
+          // Show level up notification
+          this.showLevelUpNotification();
+        },
+        () => {
+          // Restart game functionality
+          this.scene.restart();
+        }
+      );
     }
 
     // Add ESC key handler for menu
@@ -474,7 +497,13 @@ export class GameScene extends Phaser.Scene {
         this.enemyManager.getEnemyBullets().getLength();
       const soundsCount = this.audioManager.getActiveSoundsCount();
 
-      this.debugPanel.update(fps, enemyCount, bulletCount, soundsCount);
+      this.debugPanel.update(
+        fps,
+        enemyCount,
+        bulletCount,
+        soundsCount,
+        this.difficultyLevel
+      );
     }
   }
 
