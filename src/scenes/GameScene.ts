@@ -7,6 +7,20 @@ import { ScoreManager } from "../managers/ScoreManager";
 import { DebugPanel } from "../managers/DebugPanel";
 import { AudioManager } from "../managers/AudioManager";
 
+// Extend the BackgroundManager to fix the linter error
+declare module "../managers/BackgroundManager" {
+  interface BackgroundManager {
+    update(): void;
+  }
+}
+
+// Extend the EnemyManager to fix the linter error
+declare module "../managers/EnemyManager" {
+  interface EnemyManager {
+    update(difficultyLevel?: number, gameTimer?: number): void;
+  }
+}
+
 export class GameScene extends Phaser.Scene {
   private playerManager!: PlayerManager;
   private backgroundManager!: BackgroundManager;
@@ -15,6 +29,13 @@ export class GameScene extends Phaser.Scene {
   private scoreManager!: ScoreManager;
   private audioManager!: AudioManager;
   private debugPanel?: DebugPanel;
+
+  // Game progression variables
+  private gameTimer: number = 0;
+  private difficultyLevel: number = 1;
+  private difficultyText?: Phaser.GameObjects.Text;
+  private nextDifficultyIncrease: number = 30000; // 30 seconds
+  private difficultyIncreaseInterval: number = 30000; // 30 seconds
 
   constructor() {
     super({ key: "GameScene" });
@@ -142,17 +163,17 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    // Generate bullet textures
-    this.generateBulletTextures();
-
     // Set physics to use fixed time step
     this.physics.world.fixedStep = true;
     this.physics.world.setBoundsCollision(true, true, true, true);
 
-    // Initialize managers
+    // Generate bullet textures
+    this.generateBulletTextures();
+
+    // Initialize managers in the correct order
     this.backgroundManager = new BackgroundManager(this);
-    this.playerManager = new PlayerManager(this);
     this.audioManager = new AudioManager(this);
+    this.playerManager = new PlayerManager(this, this.audioManager);
     this.weaponManager = new WeaponManager(this, this.audioManager);
     this.enemyManager = new EnemyManager(
       this,
@@ -162,24 +183,40 @@ export class GameScene extends Phaser.Scene {
     );
     this.scoreManager = new ScoreManager(this);
 
+    // Add difficulty level text in the bottom right corner
+    this.difficultyText = this.add
+      .text(
+        this.cameras.main.width - 20,
+        this.cameras.main.height - 20,
+        `${this.difficultyLevel} lvl`,
+        {
+          fontFamily: "Arial",
+          fontSize: "20px",
+          color: "#ffffff",
+        }
+      )
+      .setOrigin(1, 1);
+
     // Initialize sound effects
     this.audioManager.initSoundEffects();
 
     // Start background music
     this.audioManager.playBackgroundMusic();
 
-    // Initialize debug panel if enabled
-    if (DebugPanel.isEnabled()) {
+    // Create debug panel if needed
+    if (new URLSearchParams(window.location.search).get("debug") === "true") {
       this.debugPanel = new DebugPanel(this);
     }
 
     // Add ESC key handler for menu
-    this.input.keyboard.on("keydown-ESC", () => {
-      if (!this.playerManager.isGameOver()) {
-        this.scene.pause();
-        this.scene.launch("MenuScene", { audioManager: this.audioManager });
-      }
-    });
+    if (this.input.keyboard) {
+      this.input.keyboard.on("keydown-ESC", () => {
+        if (!this.playerManager.isGameOver()) {
+          this.scene.pause();
+          this.scene.launch("MenuScene", { audioManager: this.audioManager });
+        }
+      });
+    }
 
     // Helper function to create explosion at collision point
     const createExplosion = (x: number, y: number) => {
@@ -388,14 +425,34 @@ export class GameScene extends Phaser.Scene {
     );
   }
 
-  update(time: number) {
+  update(time: number, delta: number) {
+    // Update game timer
+    if (!this.playerManager.isGameOver()) {
+      this.gameTimer += delta;
+
+      // Check if it's time to increase difficulty
+      if (this.gameTimer >= this.nextDifficultyIncrease) {
+        this.difficultyLevel++;
+        this.nextDifficultyIncrease += this.difficultyIncreaseInterval;
+
+        // Update difficulty text
+        if (this.difficultyText) {
+          this.difficultyText.setText(`${this.difficultyLevel} lvl`);
+        }
+
+        // Flash level up notification
+        this.showLevelUpNotification();
+      }
+    }
+
     // Update all managers
     this.backgroundManager.update();
     this.playerManager.update();
 
     // Only update enemy manager and handle shooting if game is not over
     if (!this.playerManager.isGameOver()) {
-      this.enemyManager.update();
+      // Pass difficulty level to enemy manager
+      this.enemyManager.update(this.difficultyLevel, this.gameTimer);
 
       // Handle shooting
       const player = this.playerManager.getPlayer();
@@ -419,5 +476,43 @@ export class GameScene extends Phaser.Scene {
 
       this.debugPanel.update(fps, enemyCount, bulletCount, soundsCount);
     }
+  }
+
+  // Show level up notification
+  private showLevelUpNotification() {
+    const cameras = this.cameras.main;
+    if (!cameras) return;
+
+    // Update the level text format
+    if (this.difficultyText) {
+      this.difficultyText.setText(`${this.difficultyLevel} lvl`);
+    }
+
+    const levelText = this.add
+      .text(
+        cameras.width / 2,
+        cameras.height / 2,
+        `LEVEL ${this.difficultyLevel}`,
+        {
+          fontFamily: "Arial",
+          fontSize: "32px",
+          color: "#00ff00",
+          stroke: "#ffffff",
+          strokeThickness: 4,
+        }
+      )
+      .setOrigin(0.5);
+
+    this.tweens.add({
+      targets: levelText,
+      alpha: { from: 1, to: 0 },
+      scaleX: { from: 1, to: 2 },
+      scaleY: { from: 1, to: 2 },
+      ease: "Power2",
+      duration: 1500,
+      onComplete: () => {
+        levelText.destroy();
+      },
+    });
   }
 }

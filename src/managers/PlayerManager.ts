@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { AudioManager } from "./AudioManager";
 
 export class PlayerManager {
   private player: Phaser.Physics.Arcade.Sprite;
@@ -12,9 +13,11 @@ export class PlayerManager {
   private onPlayerChangeCallbacks: ((
     player: Phaser.Physics.Arcade.Sprite
   ) => void)[] = [];
+  private audioManager: AudioManager;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, audioManager: AudioManager) {
     this.scene = scene;
+    this.audioManager = audioManager;
     this.cursors = this.scene.input.keyboard!.createCursorKeys();
     this.player = this.createPlayer();
     this.createLifeIndicators();

@@ -10,6 +10,8 @@ export class EnemyManager {
   private player: Phaser.Physics.Arcade.Sprite;
   private playerManager: PlayerManager;
   private audioManager: AudioManager;
+  private spawnEvent!: Phaser.Time.TimerEvent;
+  private lastEnemyTypeUnlocked: number = 1; // Start with only one enemy type
 
   constructor(
     scene: Phaser.Scene,
@@ -27,7 +29,7 @@ export class EnemyManager {
   }
 
   private setupEnemySpawning() {
-    this.scene.time.addEvent({
+    this.spawnEvent = this.scene.time.addEvent({
       delay: 2000,
       callback: this.spawnEnemy,
       callbackScope: this,
@@ -38,7 +40,10 @@ export class EnemyManager {
   private spawnEnemy() {
     const margin = 50;
     const x = Phaser.Math.Between(margin, window.innerWidth - margin);
-    const enemyNumber = Phaser.Math.Between(1, 4);
+
+    // Only spawn enemy types that have been unlocked
+    const enemyNumber = Phaser.Math.Between(1, this.lastEnemyTypeUnlocked);
+
     const y = -50; // This ensures they start off-screen
     const enemy = this.enemies.create(x, y, `enemy-${enemyNumber}`);
     enemy.setScale(0.25);
@@ -77,7 +82,7 @@ export class EnemyManager {
     const currentTime = this.scene.time.now;
     const lastShot = enemy.getData("lastShot") || 0;
     const enemyType = enemy.getData("type");
-    const shootingDelay = 2000; // Shoot every 2 seconds
+    const shootingDelay = enemy.getData("shootingDelay") || 2000; // Use dynamic shooting delay
 
     if (currentTime - lastShot >= shootingDelay) {
       // Play enemy shoot sound
@@ -166,7 +171,31 @@ export class EnemyManager {
     }
   }
 
-  update() {
+  update(difficultyLevel: number = 1, gameTimer: number = 0) {
+    // Unlock new enemy types based on difficulty level
+    this.lastEnemyTypeUnlocked = Math.min(
+      Math.floor(difficultyLevel / 2) + 1,
+      4
+    );
+
+    // Adjust spawn rate based on difficulty
+    const newSpawnDelay = Math.max(2000 - (difficultyLevel - 1) * 200, 500);
+    if (this.spawnEvent && this.spawnEvent.delay !== newSpawnDelay) {
+      // Remove the current event
+      this.spawnEvent.remove();
+
+      // Create a new timer event with the updated delay
+      this.spawnEvent = this.scene.time.addEvent({
+        delay: newSpawnDelay,
+        callback: this.spawnEnemy,
+        callbackScope: this,
+        loop: true,
+      });
+    }
+
+    // Calculate speed multiplier based on difficulty
+    const speedMultiplier = 1 + (difficultyLevel - 1) * 0.1; // 10% increase per level
+
     this.enemies
       .getChildren()
       .forEach((enemy: Phaser.GameObjects.GameObject) => {
@@ -182,6 +211,8 @@ export class EnemyManager {
             sprite.setX(
               sprite.getData("startX") + Math.sin(time * frequency) * amplitude
             );
+            // Apply speed multiplier
+            sprite.setVelocityY(this.baseSpeed * speedMultiplier);
             break;
 
           case 2: // Zigzag
@@ -190,25 +221,42 @@ export class EnemyManager {
             } else if (sprite.x <= 50) {
               sprite.setData("directionX", 1);
             }
-            sprite.setVelocityX(this.baseSpeed * sprite.getData("directionX"));
+            // Apply speed multiplier
+            sprite.setVelocityX(
+              this.baseSpeed * sprite.getData("directionX") * speedMultiplier
+            );
+            sprite.setVelocityY(this.baseSpeed * speedMultiplier);
             break;
 
           case 3: // Circular
             const circleRadius = 50;
-            const circleSpeed = 0.003;
+            const circleSpeed = 0.003 * speedMultiplier;
             const angle = sprite.getData("angle") + circleSpeed;
             sprite.setData("angle", angle);
             sprite.setX(
               sprite.getData("startX") + Math.cos(angle) * circleRadius
             );
+            // Apply speed multiplier
+            sprite.setVelocityY(this.baseSpeed * speedMultiplier);
             break;
 
           case 4: // Pulsing
             const pulseFrequency = 0.002;
-            const speedMultiplier = 1 + Math.sin(time * pulseFrequency) * 0.5;
-            sprite.setVelocityY(this.baseSpeed * speedMultiplier);
+            const pulsingMultiplier = 1 + Math.sin(time * pulseFrequency) * 0.5;
+            // Apply both pulsing and difficulty speed multipliers
+            sprite.setVelocityY(
+              this.baseSpeed * pulsingMultiplier * speedMultiplier
+            );
             break;
         }
+
+        // Shooting frequency increases with difficulty
+        const shootingDelayMultiplier = Math.max(
+          1 - (difficultyLevel - 1) * 0.1,
+          0.5
+        ); // Reduce delay by 10% per level, minimum 50%
+        const currentShootingDelay = 2000 * shootingDelayMultiplier;
+        sprite.setData("shootingDelay", currentShootingDelay);
 
         // Add shooting logic
         this.shootAtPlayer(sprite);
