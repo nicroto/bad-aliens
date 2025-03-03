@@ -56,6 +56,14 @@ export class MenuScene extends Phaser.Scene {
       window.innerHeight / 2
     );
 
+    // Register Escape key to close menu and resume game
+    if (this.input.keyboard) {
+      this.input.keyboard.on("keydown-ESC", () => {
+        this.scene.stop();
+        this.scene.resume("GameScene");
+      });
+    }
+
     // Create menu title
     const titleText = this.add.text(0, -200, "GAME MENU", {
       fontSize: "48px",
