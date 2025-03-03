@@ -7,6 +7,9 @@ export class MenuScene extends Phaser.Scene {
   private backgroundVolume: number = 0.25;
   private fxVolume: number = 1.0;
   private volumeTexts: { [key: string]: Phaser.GameObjects.Text } = {};
+  private readonly SLIDER_WIDTH: number = 300;
+  private readonly SLIDER_HEIGHT: number = 20;
+  private readonly SLIDER_PADDING: number = 10;
 
   constructor() {
     super({ key: "MenuScene" });
@@ -154,9 +157,9 @@ export class MenuScene extends Phaser.Scene {
     initialValue: number,
     onValueChange: (value: number) => void
   ): Phaser.GameObjects.GameObject[] {
-    const width = 300;
-    const height = 20;
-    const padding = 10;
+    const width = this.SLIDER_WIDTH;
+    const height = this.SLIDER_HEIGHT;
+    const padding = this.SLIDER_PADDING;
 
     // Create background bar
     const background = this.add.rectangle(x, y, width, height, 0x666666);
@@ -227,7 +230,7 @@ export class MenuScene extends Phaser.Scene {
     volumeText: Phaser.GameObjects.Text,
     onValueChange: (value: number) => void
   ) {
-    fillBar.width = fillBar.parentContainer.getBounds().width * value;
+    fillBar.width = this.SLIDER_WIDTH * value;
     volumeText.setText(`${Math.round(value * 100)}%`);
     onValueChange(value);
   }
